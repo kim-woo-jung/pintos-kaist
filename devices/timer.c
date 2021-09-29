@@ -93,8 +93,9 @@ timer_sleep (int64_t ticks) {
 	int64_t start = timer_ticks ();
 
 	ASSERT (intr_get_level () == INTR_ON);  /*  INTR_ON means Interrupts enabled. */
-	while (timer_elapsed (start) < ticks)
-		thread_yield (); // 다음 thread에게 실행권한 넘기는건가..?
+	// while (timer_elapsed (start) < ticks)
+	// 	thread_yield (); // <= 다음 thread에게 실행권한 넘기는건가..?
+	thread_sleep(start + ticks);
 }
 
 /* Suspends execution for approximately MS milliseconds. */

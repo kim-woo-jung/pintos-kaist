@@ -7,7 +7,7 @@
 struct task_state {
 	uint32_t res1;
 	uint64_t rsp0;
-	u rsp1;
+	uint64_t rsp1;
 	uint64_t rsp2;
 	uint64_t res2;
 	uint64_t ist1;
