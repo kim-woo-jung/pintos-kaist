@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 /* Number of timer interrupts per second. */
-#define TIMER_FREQ 100
+#define TIMER_FREQ 100 // We don't recommend changing this value, cuz any change is likely to cause many of the tests to fail - jb
 
 void timer_init (void);
 void timer_calibrate (void);

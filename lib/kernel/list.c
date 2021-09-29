@@ -36,20 +36,20 @@ static bool is_sorted (struct list_elem *a, struct list_elem *b,
 
 /* Returns true if ELEM is a head, false otherwise. */
 static inline bool
-is_head (struct list_elem *elem) {
+is_head (struct list_elem *elem) {	/* parameter 로 준 것이 header인지 확인. 맞으면 true 아니면 else */
 	return elem != NULL && elem->prev == NULL && elem->next != NULL;
 }
 
 /* Returns true if ELEM is an interior element,
    false otherwise. */
 static inline bool
-is_interior (struct list_elem *elem) {
+is_interior (struct list_elem *elem) { /* parameter로 준 것 이 header나 tail이 아닌 연결리스트 내부에 있는 것 */
 	return elem != NULL && elem->prev != NULL && elem->next != NULL;
 }
 
 /* Returns true if ELEM is a tail, false otherwise. */
 static inline bool
-is_tail (struct list_elem *elem) {
+is_tail (struct list_elem *elem) { 
 	return elem != NULL && elem->prev != NULL && elem->next == NULL;
 }
 
@@ -65,7 +65,7 @@ list_init (struct list *list) {
 
 /* Returns the beginning of LIST.  */
 struct list_elem *
-list_begin (struct list *list) {
+list_begin (struct list *list) {	// 첫 value return
 	ASSERT (list != NULL);
 	return list->head.next;
 }
@@ -74,7 +74,7 @@ list_begin (struct list *list) {
    last element in its list, returns the list tail.  Results are
    undefined if ELEM is itself a list tail. */
 struct list_elem *
-list_next (struct list_elem *elem) {
+list_next (struct list_elem *elem) {	// tail 만 아니면 다음꺼 return 해줌
 	ASSERT (is_head (elem) || is_interior (elem));
 	return elem->next;
 }
@@ -113,7 +113,7 @@ list_prev (struct list_elem *elem) {
    reverse order, from back to front.  Here's typical usage,
    following the example from the top of list.h:
 
-   for (e = list_rbegin (&foo_list); e != list_rend (&foo_list);
+   for (e = list_rbegin (&foo_list); e != list_rend (&foo_list); 
    e = list_prev (e))
    {
    struct foo *f = list_entry (e, struct foo, elem);
