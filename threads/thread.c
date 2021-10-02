@@ -655,13 +655,23 @@ void thread_awake(int64_t wakeup_tick){
 }
 
 // thread 우선순위 비교, ready 상태로 넣을 때 우선순위로 넣기 위해서 사용됨
-bool thread_compare_priority (struct list_elem *l, struct list_elem *s, void *aux UNUSED)
-{
-    return list_entry (l, struct thread, elem)->priority
-         > list_entry (s, struct thread, elem)->priority;
+// bool thread_compare_priority (struct list_elem *l, struct list_elem *s, void *aux UNUSED)
+// {
+//     return list_entry (l, struct thread, elem)->priority
+//          > list_entry (s, struct thread, elem)->priority;
+// }
+
+bool thread_compare_priority(struct list_elem *l, struct list_elem *s, void *aux UNUSED) {
+    struct thread *thread_a = list_entry(l, struct thread, elem);
+    struct thread *thread_b = list_entry(s, struct thread, elem);
+    if(thread_a != NULL && thread_b != NULL) {
+        if(thread_a->priority > thread_b->priority) return true;
+        else return false;
+    }
+    return false;
 }
 
-// 현재 돌아가는 thread와 ready의 가장 앞에 있는 thread의 우선순위 비교
+// 현재 돌아가는 thread와 ready의 가장 앞에 있는 thread의 우선순위 비교해서 가장 앞에 있는게 돌아가는거보다 크면 cpu선점
 void 
 thread_test_preemption (void)
 {
