@@ -44,3 +44,35 @@ syscall_handler (struct intr_frame *f UNUSED) {
 	printf ("system call!\n");
 	thread_exit ();
 }
+
+/*
+
+USER_STACK +----------------------------------+
+           |             user stack           |
+           |                 |                |
+           |                 |                |
+           |                 V                |
+           |           grows downward         |
+           |                                  |
+           |                                  |
+           |                                  |
+           |                                  |
+           |           grows upward           |
+           |                 ^                |
+           |                 |                |
+           |                 |                |
+           +----------------------------------+
+           | uninitialized data segment (BSS) |
+           +----------------------------------+
+           |     initialized data segment     |
+           +----------------------------------+
+           |            code segment          |
+ 0x400000  +----------------------------------+
+           |                                  |
+           |                                  |
+           |                                  |
+           |                                  |
+           |                                  |
+       0   +----------------------------------+
+
+*/

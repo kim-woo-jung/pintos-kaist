@@ -26,6 +26,7 @@ static void process_cleanup (void);
 static bool load (const char *file_name, struct intr_frame *if_);
 static void initd (void *f_name);
 static void __do_fork (void *);
+void argument_stack(char **argv, int argc, struct intr_frame *if_);
 
 /* General process initializer for initd and other process. */
 static void
@@ -162,7 +163,11 @@ error:
  * Returns -1 on fail. */
 int
 process_exec (void *f_name) {
-	char *file_name = f_name;
+	char *file_name = f_name; // void로 받은 인자를 문자타입으로 받음
+	char *file_name_copy[48];		
+	memcpy(file_name_copy, file_name, strlen(file_name) + 1);
+	
+
 	bool success;
 
 	/* We cannot use the intr_frame in the thread structure.
@@ -176,17 +181,80 @@ process_exec (void *f_name) {
 	/* We first kill the current context */
 	process_cleanup ();
 
+	char *token, *last;
+	int token_count = 0;
+	char *arg_list[64];
+	token = strtok_r(file_name_copy, " ", &last);
+	char *tmp_save = token;
+
+	arg_list[token_count] = token;
+	while (token != NULL)
+	{
+		/* code */
+		token = strtok_r(NULL, " ", &last);
+		token_count++;
+		arg_list[token_count] = token;
+	}
+	
+
 	/* And then load the binary */
 	success = load (file_name, &_if);
+
+
 
 	/* If load failed, quit. */
 	palloc_free_page (file_name);
 	if (!success)
 		return -1;
 
+	argument_stack(arg_list, token_count, &_if);
+	// hex_dump(_if_.rsp, _if_.rsp, USER_STACK - (uint16_t)*rspp, true);
+
 	/* Start switched process. */
-	do_iret (&_if);
-	NOT_REACHED ();
+	do_iret (&_if);	// 얘네 둘은 뭐람?
+	NOT_REACHED (); // 얘네 둘은 뭐람?
+}
+
+void argument_stack(char **argv, int argc, struct intr_frame *if_)
+{
+	/* insert arguments' address */
+	/* 스택에다 argument들을 넣어줌 */
+	// userstack의 맨 상단은 0x47480000
+
+	char *argu_address[128];
+	for (int i = argc -1; i >= 0; i--)
+	{
+		int argv_len = strlen(argv[i]);
+		if_->rsp = if_->rsp - (argv_len + 1);	// if_->rsp = 현재 위치를 가리키는 스택포인터(stack pointer)
+		memcpy(if_->rsp, argv[i], argv_len + 1);
+		argu_address[i] = if_->rsp;
+	}
+
+	/* insert padding for word-align */
+	// 8byte 단위로 떨어져야하기 때문에 위에서 할당하고 8 byte 단위로 남게 채워줌
+	while (if_->rsp % 8 != 0)
+	{
+		if_->rsp--;
+		*(uint8_t *)(if_->rsp) = 0;
+	}
+
+	/* insert address of strings including sentinel */
+	// 이곳 argc는 parameter의 수 
+	for (int i = argc; i >= 0; i--)
+	{
+		if_->rsp = if_->rsp -8;
+		if (i == argc) 
+			memset(if_->rsp, 0, sizeof(char **));
+		else
+			memcpy(if_->rsp, &argu_address[i], sizeof(char **));
+	}
+
+	/* fake return address */
+	if_->rsp = if_->rsp -8;
+	memset(if_->rsp, 0, sizeof(void *));
+
+	if_->R.rdi = argc;
+	if_->R.rsi = if_->rsp + 8;
 }
 
 

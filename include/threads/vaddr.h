@@ -32,7 +32,7 @@
 #define pg_round_down(va) (void *) ((uint64_t) (va) & ~PGMASK)
 
 /* Kernel virtual address start */
-#define KERN_BASE LOADER_KERN_BASE
+#define KERN_BASE LOADER_KERN_BASE	// kernel virtual memory 와 user virtual memory를 나누는 기준 default (defaults to 0x8004000000) 0~ 0x8004000000 까지 유저
 
 /* User stack start */
 #define USER_STACK 0x47480000
@@ -46,10 +46,12 @@
 // FIXME: add checking
 /* Returns kernel virtual address at which physical address PADDR
  *  is mapped. */
+//Returns the kernel virtual address corresponding to physical address pa, which should be between 0 and the number of bytes of physical memory.
 #define ptov(paddr) ((void *) (((uint64_t) paddr) + KERN_BASE))
 
 /* Returns physical address at which kernel virtual address VADDR
  * is mapped. */
+//Returns the physical address corresponding to va, which must be a kernel virtual address.
 #define vtop(vaddr) \
 ({ \
 	ASSERT(is_kernel_vaddr(vaddr)); \
