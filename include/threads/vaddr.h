@@ -32,7 +32,7 @@
 #define pg_round_down(va) (void *) ((uint64_t) (va) & ~PGMASK)
 
 /* Kernel virtual address start */
-#define KERN_BASE LOADER_KERN_BASE	// kernel virtual memory 와 user virtual memory를 나누는 기준 default (defaults to 0x8004000000) 0~ 0x8004000000 까지 유저
+#define KERN_BASE LOADER_KERN_BASE	// kernel virtual memory 와 user virtual memory를 나누는 기준 default (defaults to 0x8004000000) 0~ 0x8004000000 까지 유저 virtual memory
 
 /* User stack start */
 #define USER_STACK 0x47480000

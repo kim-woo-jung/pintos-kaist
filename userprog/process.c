@@ -45,14 +45,21 @@ process_create_initd (const char *file_name) {
 	tid_t tid;
 
 	/* Make a copy of FILE_NAME.
-	 * Otherwise there's a race between the caller and load(). */
-	fn_copy = palloc_get_page (0);
+	 * Otherwise there's a race between the car and load(lle). ? */
+	fn_copy = palloc_get_page (0); 
 	if (fn_copy == NULL)
 		return TID_ERROR;
-	strlcpy (fn_copy, file_name, PGSIZE);
+	strlcpy (fn_copy, file_name, PGSIZE); // fine_name을 fn_copy 하는데 PGSIZE만큼 복사한다.
+
+	// Projuect 2-1. Pass args - extract program name
+	char *save_ptr;
+	strtok_r(file_name, " ", &save_ptr);
 
 	/* Create a new thread to execute FILE_NAME. */
-	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy);
+	// thread_create(const char *name, int priority, thread_func *function, void *aux)
+	//              (스레드 이름(문자열), 스레드 우선순위, 생성된 스레드가 실행할 함수를 가리키는 포인터, 함수 수행할 때 사용할 인자 값)
+	// 프로세스(스레드) 생성 함수를 호출하고 tid 리턴
+	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy);	// new thread 생성하여 실행
 	if (tid == TID_ERROR)
 		palloc_free_page (fn_copy);
 	return tid;
@@ -65,7 +72,7 @@ initd (void *f_name) {
 	supplemental_page_table_init (&thread_current ()->spt);
 #endif
 
-	process_init ();
+	// process_init ();
 
 	if (process_exec (f_name) < 0)
 		PANIC("Fail to launch initd\n");
@@ -162,12 +169,12 @@ error:
 /* Switch the current execution context to the f_name.
  * Returns -1 on fail. */
 int
+
 process_exec (void *f_name) {
 	char *file_name = f_name; // void로 받은 인자를 문자타입으로 받음
 	char *file_name_copy[48];		
 	memcpy(file_name_copy, file_name, strlen(file_name) + 1);
 	
-
 	bool success;
 
 	/* We cannot use the intr_frame in the thread structure.
@@ -200,15 +207,13 @@ process_exec (void *f_name) {
 	/* And then load the binary */
 	success = load (file_name, &_if);
 
-
-
 	/* If load failed, quit. */
 	palloc_free_page (file_name);
 	if (!success)
 		return -1;
 
 	argument_stack(arg_list, token_count, &_if);
-	// hex_dump(_if_.rsp, _if_.rsp, USER_STACK - (uint16_t)*rspp, true);
+	hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true);
 
 	/* Start switched process. */
 	do_iret (&_if);	// 얘네 둘은 뭐람?
@@ -272,7 +277,13 @@ process_wait (tid_t child_tid UNUSED) {
 	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
+	for (size_t i = 0; i < 1000000000; i++)
+	{
+		/* code */
+	}
+	
 	return -1;
+
 }
 
 /* Exit the process. This function is called by thread_exit (). */
@@ -398,19 +409,20 @@ load (const char *file_name, struct intr_frame *if_) {
 	int i;
 
 	/* Allocate and activate page directory. */
-	t->pml4 = pml4_create ();
+	t->pml4 = pml4_create (); /* page directory 생성 */
 	if (t->pml4 == NULL)
 		goto done;
-	process_activate (thread_current ());
+	process_activate (thread_current ()); /* current page table 활성화*/
 
 	/* Open executable file. */
-	file = filesys_open (file_name);
+	file = filesys_open (file_name);	/* 프로그램 파일 open*/
 	if (file == NULL) {
 		printf ("load: %s: open failed\n", file_name);
 		goto done;
 	}
 
 	/* Read and verify executable header. */
+	/* ELF파일의 헤더 정보를 읽어와 저장 */
 	if (file_read (file, &ehdr, sizeof ehdr) != sizeof ehdr
 			|| memcmp (ehdr.e_ident, "\177ELF\2\1\1", 7)
 			|| ehdr.e_type != 2
@@ -423,6 +435,7 @@ load (const char *file_name, struct intr_frame *if_) {
 	}
 
 	/* Read program headers. */
+	/* 배치 정보를 읽어와 저장 */
 	file_ofs = ehdr.e_phoff;
 	for (i = 0; i < ehdr.e_phnum; i++) {
 		struct Phdr phdr;
@@ -465,6 +478,7 @@ load (const char *file_name, struct intr_frame *if_) {
 						read_bytes = 0;
 						zero_bytes = ROUND_UP (page_offset + phdr.p_memsz, PGSIZE);
 					}
+					/* 배치 정보를 통해 파일을 메모리에 적재 */
 					if (!load_segment (file, file_page, (void *) mem_page,
 								read_bytes, zero_bytes, writable))
 						goto done;
@@ -476,7 +490,7 @@ load (const char *file_name, struct intr_frame *if_) {
 	}
 
 	/* Set up stack. */
-	if (!setup_stack (if_))
+	if (!setup_stack (if_)) /* 스택 초기화*/
 		goto done;
 
 	/* Start address. */
