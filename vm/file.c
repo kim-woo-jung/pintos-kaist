@@ -7,6 +7,7 @@ static bool file_backed_swap_out (struct page *page);
 static void file_backed_destroy (struct page *page);
 
 /* DO NOT MODIFY this struct */
+/* This is the table of function pointers for file-backed pages */
 static const struct page_operations file_ops = {
 	.swap_in = file_backed_swap_in,
 	.swap_out = file_backed_swap_out,

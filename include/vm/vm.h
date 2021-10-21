@@ -2,6 +2,16 @@
 #define VM_VM_H
 #include <stdbool.h>
 #include "threads/palloc.h"
+#include "lib/kernel/hash.h"
+#include "filesys/off_t.h"
+
+struct vmpage_info{
+	struct file *file;
+	off_t ofs;
+	size_t page_read_bytes;
+	size_t page_zero_bytes;
+};
+
 
 enum vm_type {
 	/* page not initialized */
@@ -17,7 +27,7 @@ enum vm_type {
 
 	/* Auxillary bit flag marker for store information. You can add more
 	 * markers, until the value is fit in the int. */
-	VM_MARKER_0 = (1 << 3),
+	VM_MARKER_0 = (1 << 3),  /*stack*/
 	VM_MARKER_1 = (1 << 4),
 
 	/* DO NOT EXCEED THIS VALUE. */
@@ -46,7 +56,8 @@ struct page {
 	struct frame *frame;   /* Back reference for frame */
 
 	/* Your implementation */
-
+	struct hash_elem hash_elem;
+	bool writable;
 	/* Per-type data are binded into the union.
 	 * Each function automatically detects the current union */
 	union {
@@ -60,8 +71,9 @@ struct page {
 };
 
 /* The representation of "frame" */
+/* represents a physical memory */
 struct frame {
-	void *kva;
+	void *kva;   //kernel vertual address
 	struct page *page;
 };
 
@@ -78,6 +90,9 @@ struct page_operations {
 
 #define swap_in(page, v) (page)->operations->swap_in ((page), v)
 #define swap_out(page) (page)->operations->swap_out (page)
+
+/*This tells us that calling destroy function actually invokes (page)->operations->destroy (page), 
+								which is the destroy function retrieved from the page structure. */
 #define destroy(page) \
 	if ((page)->operations->destroy) (page)->operations->destroy (page)
 
@@ -85,6 +100,7 @@ struct page_operations {
  * We don't want to force you to obey any specific design for this struct.
  * All designs up to you for this. */
 struct supplemental_page_table {
+	struct hash* page_table;
 };
 
 #include "threads/thread.h"
@@ -110,3 +126,6 @@ bool vm_claim_page (void *va);
 enum vm_type page_get_type (struct page *page);
 
 #endif  /* VM_VM_H */
+
+
+

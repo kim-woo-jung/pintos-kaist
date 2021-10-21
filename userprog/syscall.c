@@ -88,20 +88,9 @@ syscall_init (void) {
 /* The main system call interface */
 void
 syscall_handler (struct intr_frame *f UNUSED) {
-	// TODO: Your implementation goes here.
 
-	// intr_frame 에서 stack pointer 를 get
-	// stack(esp) 에서 system call num를 get.
-
-	/*
-	이런 식으로 스택에서 찾아와 빼서 쓰면 됨
-	arg3
-	arg2
-	arg1
-	arg0
-	num
-	esp
-	*/
+	struct thread* curr = thread_current ();
+	curr->rsp = f->rsp;
 
 	switch (f->R.rax)
 	{

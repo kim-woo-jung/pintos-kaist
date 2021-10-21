@@ -52,6 +52,8 @@ uninit_initialize (struct page *page, void *kva) {
 	void *aux = uninit->aux;
 
 	/* TODO: You may need to fix this function. */
+	/*page initializer는 initialized 될 page type에 해당하는 initializer*/
+	/*init 은 lazy load */
 	return uninit->page_initializer (page, uninit->type, kva) &&
 		(init ? init (page, aux) : true);
 }

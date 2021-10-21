@@ -1,6 +1,7 @@
 {
     "C_Cpp.errorSquiggles": "Disabled",
     "files.associations": {
-        "*.inc": "c"
+        "*.inc": "c",
+        "disk.h": "c"
     }
 }
