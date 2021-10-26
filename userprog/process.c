@@ -370,44 +370,6 @@ void load_userStack(char **argv, int argc, void **rspp)
  * does nothing. */
 int
 process_wait (tid_t child_tid UNUSED) {
-	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
-	 * XXX:       to add infinite loop here before
-	 * XXX:       implementing the process_wait. */
-	/*
-
-	/*
-		sema_init()
-		sema_down
-	 * /
-
-	Wait for a child process pid to exit and retrieve the child’s exit status.
-	 If pid is alive, wait till it terminates. Returns the status that pid passed to
-	exit.
-
-	 If pid did not call exit, but was terminated by the kernel, return -1.
-	
-	
-	 A parent process can call wait for the child process that has terminated.
-	→ return exit status of the terminated child process.
-	
-	 After the child terminates, the parent should deallocate its process
-	descriptor
-	ㄴ child list 에서 제거
-	
-	 wait fails and return -1 if
-	
-	 pid does not refer to a direct child of the calling process.
-	
-	 The process that calls wait has already called wait on pid.
-
-	 Search the descriptor of the child process by using child_tid.
-	
-	 The caller blocks until the child process exits.
-	
-	 Once child process exits, deallocate the descriptor of child process and returns
-	exit status of the child process.
-	
-	*/
 
 	struct thread *cur = thread_current();
 
@@ -834,8 +796,7 @@ install_page (void *upage, void *kpage, bool writable) {
  * If you want to implement the function for only project 2, implement it on the
  * upper block. */
 
-static bool
-lazy_load_segment (struct page *page, void *aux) {
+bool lazy_load_segment (struct page *page, void *aux) {
 	/* TODO: Load the segment from the file */
 	/* TODO: This called when the first page fault occurs on address VA. */
 	/* TODO: VA is available when calling this function. */
@@ -845,7 +806,7 @@ lazy_load_segment (struct page *page, void *aux) {
 	/* load proper info to page */
 	if (info -> page_read_bytes > 0) {
 		file_seek (info -> file, info -> ofs);
-		if (file_read (info -> file, page -> va, info -> page_read_bytes) != (off_t) info -> page_read_bytes) {
+		if (file_read (info -> file, page -> frame ->kva, info -> page_read_bytes) != (off_t) info -> page_read_bytes) {
 			vm_dealloc_page (page);
 			return false;
 		}
@@ -946,3 +907,4 @@ struct thread *get_child_with_pid(int pid)
 	}	
 	return NULL;
 }
+

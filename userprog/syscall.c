@@ -15,7 +15,7 @@
 #include "threads/palloc.h"
 #include "threads/vaddr.h"
 #include "userprog/process.h"
-
+#include "vm/file.h"
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -42,7 +42,8 @@ int dup2(int oldfd, int newfd);
 
 tid_t fork (const char *thread_name, struct intr_frame *f);
 int exec (char *file_name);
-
+static void* mmap (void *addr, size_t length, int writable, int fd, off_t offset);
+static void munmap (void* addr);
 // Project 2-4 File Descriptor
 static struct file *find_file_by_fd(int fd);
 int add_file_to_fdt(struct file *file);
@@ -140,13 +141,21 @@ syscall_handler (struct intr_frame *f UNUSED) {
 	case SYS_DUP2:
 		f->R.rax = dup2(f->R.rdi, f->R.rsi);
 		break;
+	/* Project 3 and optionally project 4. */
+	case SYS_MMAP:
+		f->R.rax = (uint64_t) mmap ((void*) f->R.rdi, (size_t) f->R.rsi, (int) f->R.rdx, (int) f->R.r10, (off_t) f->R.r8);
+		break;
+
+	case SYS_MUNMAP:
+		munmap ((void*) f->R.rdi);
+		break;
+
 	default:
 		exit(-1);
 		break;
 	}
 
-	// printf ("system call!\n");
-	// thread_exit ();
+
 	/*
 		procedure syscall_handler (interrupt frame)
 			get stack pointer from interrupt frame
@@ -176,7 +185,7 @@ void check_address(const uint64_t *uaddr)
 유저 영역을 벗어난 영역일 경우 프로세스 종료(exit(-1)) */
 	/* ref) userprog/pagedir.c, threads/vaddr.h */
 	struct thread *cur = thread_current();
-	if (uaddr == NULL || !(is_user_vaddr(uaddr)) || pml4_get_page(cur->pml4, uaddr) == NULL)
+	if (uaddr == NULL || !(is_user_vaddr(uaddr)) || pml4e_walk(cur->pml4, uaddr,0) == NULL)
 	{
 		exit(-1);
 	}
@@ -205,8 +214,8 @@ void exit (int status)
 	/* 스레드 종료 */
 	struct thread *cur = thread_current();
 	cur->exit_status = status;
-
 	printf("%s: exit(%d)\n", thread_name(), status); // Process Termination Message
+
 	thread_exit();
 }
 
@@ -498,4 +507,31 @@ void remove_file_from_fdt(int fd)
 		return;
 
 	cur->fdTable[fd] = NULL;
+}
+
+
+
+static void* mmap (void *addr, size_t length, int writable, int fd, off_t offset){
+    if(offset % PGSIZE != 0){
+        return NULL;
+    }
+    if (pg_round_down(addr) != addr || is_kernel_vaddr(addr) || addr == NULL || (long long)length <= 0)
+        return NULL;
+    if(fd == 0 || fd == 1)
+        exit(-1);
+    //! vm_overlap
+    if(spt_find_page(&thread_current()->spt, addr))
+        return NULL;
+
+    struct file *target = find_file_by_fd(fd);
+    if(target == NULL) 
+        return NULL;
+
+    void * ret = do_mmap(addr, length, writable, target, offset);
+    return ret;
+}
+
+static void
+munmap (void* addr){
+	do_munmap(addr);
 }

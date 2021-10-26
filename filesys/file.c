@@ -26,7 +26,7 @@ file_open (struct inode *inode) {
 		file->dupCount = 0;
 
 		return file;
-	} else {
+	} else { 
 		inode_close (inode);
 		free (file);
 		return NULL;

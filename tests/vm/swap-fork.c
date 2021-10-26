@@ -17,7 +17,7 @@ test_main (void)
   
 	/* Spawn children */
     for(i =0; i < CHILD_CNT; i++) {
-	  child[i] = fork("child-swap");
+	  child[i] = fork("child-swap"); /*fork는 정상 작동했음 올바른 값 return*/
 	  if (child[i] == 0) {
 	  	if(exec ("child-swap") == -1)
             fail("exec \"child-swap\"");
