@@ -33,9 +33,12 @@ In this function, you can setup anything related to the anonymous page.ㄴ*/
 void
 vm_anon_init (void) {
 	/* TODO: Set up the swap_disk. */
+	// swap_disk = NULL;
+
 	swap_disk = disk_get(1, 1);
     size_t swap_size = disk_size(swap_disk) / SECTORS_PER_PAGE;
     swap_table = bitmap_create(swap_size);
+
 }
 
 /* Initialize the file mapping */
@@ -62,7 +65,7 @@ anon_swap_in (struct page *page, void *kva) {
 		// convert swap slot index to reading sector number
 		sec_no = (disk_sector_t) (anon_page->swap_slot_idx * SECTORS_PER_PAGE) + i;
 		off_t ofs = i * DISK_SECTOR_SIZE;
-		disk_read (swap_disk, sec_no, kva+ofs);   // swap_disk의 sec_no sector -> kva+ofs 에 copy
+		disk_read (swap_disk, sec_no, kva+ofs);
 	}
 	// Clear swap table
 	bitmap_set (swap_table, anon_page->swap_slot_idx, false);
@@ -107,16 +110,5 @@ anon_swap_out (struct page *page) {
 /* Destroy the anonymous page. PAGE will be freed by the caller. */
 static void
 anon_destroy (struct page *page) {
-	if (page -> frame!= NULL){
-		list_remove (&page->frame->elem);
-		free(page->frame);
-	}
-	else {
-		// Swapped anon page case
-		struct anon_page *anon_page = &page->anon;
-		ASSERT (anon_page->swap_slot_idx != INVALID_SLOT_IDX);
 
-		// Clear swap table
-		bitmap_set (swap_table, anon_page->swap_slot_idx, false);
-	}
 }

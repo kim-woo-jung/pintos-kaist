@@ -5,17 +5,11 @@
 #include "userprog/process.h"
 #include "threads/mmu.h"
 
-struct mmap_file_info{
-	struct list_elem elem;
-	uint64_t start;
-	// start addr of final page
-	uint64_t end;
-};
 
 static bool file_backed_swap_in (struct page *page, void *kva);
 static bool file_backed_swap_out (struct page *page);
 static void file_backed_destroy (struct page *page);
-static struct list mmap_file_list;
+
 /* DO NOT MODIFY this struct */
 /* This is the table of function pointers for file-backed pages */
 static const struct page_operations file_ops = {
@@ -24,6 +18,19 @@ static const struct page_operations file_ops = {
 	.destroy = file_backed_destroy,
 	.type = VM_FILE,
 };
+
+
+
+//Record of mmap, store mmap_file_info
+static struct list mmap_file_list;
+
+struct mmap_file_info{
+	struct list_elem elem;
+	uint64_t start;
+	// start addr of final page
+	uint64_t end;
+};
+
 
 /* The initializer of file vm */
 void
@@ -65,7 +72,6 @@ static bool
 file_backed_swap_out (struct page *page) {
 	struct file_page *file_page UNUSED = &page->file;
 	struct thread *curr = thread_current ();
-
 
 	if (pml4_is_dirty (curr->pml4, page->va)) {
 		file_seek (file_page->file, file_page->ofs);
@@ -119,12 +125,11 @@ do_mmap (void *addr, size_t length, int writable,
 	//assume all parameter errors are handled in syscall.c
 	off_t ofs;
 	uint64_t read_bytes;
-	struct file *file_re = file_reopen(file);
 	for (uint64_t i = 0; i < length; i += PGSIZE){
 		struct mmap_info* mi = malloc (sizeof (struct mmap_info));
 		ofs = offset + i;
 		read_bytes = length - i >= PGSIZE ? PGSIZE : length -i;
-		mi->file = file_re;
+		mi->file = file_reopen (file);
 		mi->offset = ofs;
 		mi->read_bytes = read_bytes;
 		vm_alloc_page_with_initializer (VM_FILE, (void*) ((uint64_t) addr + i), writable, lazy_load_file, (void*) mi);
@@ -151,9 +156,7 @@ do_munmap (void *addr) {
 			}
 			list_remove(&mfi->elem);
 			free(mfi);
-
 			return;
 		}
 	}
-
 }

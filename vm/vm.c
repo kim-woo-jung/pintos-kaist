@@ -166,7 +166,7 @@ vm_evict_frame (void) {
 	struct page *page = victim->page;
 	bool swap_done = swap_out (page);
 	if (!swap_done) PANIC("Swap is full!\n");
-	
+
 	// Clear frame
 	victim->page = NULL;
 	memset (victim->kva, 0, PGSIZE);
@@ -304,7 +304,6 @@ vm_do_claim_page (struct page *page) {
 	/* TODO: Insert page table entry to map page's VA to frame's PA. */
 	if (!pml4_set_page (curr -> pml4, page -> va, frame->kva, page -> writable))
 		return false;
-
 	return swap_in (page, frame->kva);
 }
 
